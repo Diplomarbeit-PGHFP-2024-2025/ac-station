@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import sleep
+import datetime
 import socket
 
 from uagents import Agent, Context
@@ -32,22 +33,33 @@ async def startup_event(ctx: Context):
     # run function in background so agent can fully start while registering
     asyncio.ensure_future(register_at_registry(ctx))
 
+    ctx.storage.set("expireAt", datetime.datetime.fromtimestamp(86400).timestamp())
+
 
 async def register_at_registry(ctx: Context):
-    while not ctx.storage.get("isRegistered"):
+    while True:
+        if (
+            datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
+            > datetime.datetime.now()
+        ):
+            await sleep(
+                ctx.storage.get("expireAt") - datetime.datetime.now().timestamp()
+            )
+            continue
+
         ctx.logger.info(f"Trying to introduce: {agent.name} ({agent.address})")
         await ctx.send(
             acs_id,
             StationRegisterRequest(lat=1.0, long=1.0),
         )
 
-        await sleep(6)
+        await sleep(5)
 
 
 @agent.on_message(StationRegisterResponse)
 async def on_is_registered(ctx: Context, sender: str, _msg: StationRegisterResponse):
-    ctx.logger.info(f"got registered by: {sender}")
-    ctx.storage.set("isRegistered", True)
+    ctx.logger.info(f"got registered by: {sender}; TTL: {_msg.ttl}")
+    ctx.storage.set("expireAt", datetime.datetime.now().timestamp() + (_msg.ttl * 0.5))
 
 
 def main(args=None):
