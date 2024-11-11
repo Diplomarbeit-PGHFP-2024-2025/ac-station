@@ -11,6 +11,11 @@ from aca_protocols.station_register_protocol import (
     StationRegisterRequest,
 )
 
+from aca_protocols.car_register_protocol import (
+    CarRegisterRequest,
+    CarRegisterResponse
+)
+
 from aca_protocols.acs_registry_id import acs_id
 
 hostname = socket.gethostname()
@@ -60,6 +65,12 @@ async def register_at_registry(ctx: Context):
 async def on_is_registered(ctx: Context, sender: str, _msg: StationRegisterResponse):
     ctx.logger.info(f"got registered by: {sender}; TTL: {_msg.ttl}")
     ctx.storage.set("expireAt", datetime.datetime.now().timestamp() + (_msg.ttl * 0.5))
+
+
+@agent.on_message(CarRegisterRequest)
+async def on_register_car(ctx: Context, sender: str, msg: CarRegisterRequest):
+    ctx.logger.info(f"car {sender} wants to be registered: {msg}")
+    await ctx.send(sender, CarRegisterResponse(success=True))
 
 
 def main(args=None):
