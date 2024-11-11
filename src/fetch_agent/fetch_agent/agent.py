@@ -33,20 +33,27 @@ async def startup_event(ctx: Context):
     # run function in background so agent can fully start while registering
     asyncio.ensure_future(register_at_registry(ctx))
 
+    ctx.storage.set("expireAt", datetime.datetime.fromtimestamp(86400).timestamp())
+
 
 async def register_at_registry(ctx: Context):
-    ctx.storage.set("expireAt", datetime.datetime.fromtimestamp(86400).timestamp())
-    while (
-        datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
-        < datetime.datetime.now()
-    ):
+    while True:
+        if (
+            datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
+            > datetime.datetime.now()
+        ):
+            await sleep(
+                ctx.storage.get("expireAt") - datetime.datetime.now().timestamp()
+            )
+            continue
+
         ctx.logger.info(f"Trying to introduce: {agent.name} ({agent.address})")
         await ctx.send(
             acs_id,
             StationRegisterRequest(lat=1.0, long=1.0),
         )
 
-        await sleep(6)
+        await sleep(5)
 
 
 @agent.on_message(StationRegisterResponse)
