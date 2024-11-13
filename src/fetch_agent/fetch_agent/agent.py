@@ -16,6 +16,8 @@ from aca_protocols.property_query_protocol import (
     PropertyQueryResponse
 )
 
+from aca_protocols.car_register_protocol import CarRegisterRequest, CarRegisterResponse
+
 from aca_protocols.acs_registry_id import acs_id
 
 hostname = socket.gethostname()
@@ -72,6 +74,10 @@ async def on_is_registered(ctx: Context, sender: str, _msg: StationRegisterRespo
     ctx.logger.info(f"got registered by: {sender}; TTL: {_msg.ttl}")
     ctx.storage.set("expireAt", datetime.datetime.now().timestamp() + (_msg.ttl * 0.5))
 
+@agent.on_message(CarRegisterRequest)
+async def on_register_car(ctx: Context, sender: str, msg: CarRegisterRequest):
+    ctx.logger.info(f"car {sender} wants to be registered: {msg}")
+    await ctx.send(sender, CarRegisterResponse(success=True))
 
 @agent.on_message(PropertyQueryRequest)
 async def on_query_properties(ctx: Context, sender: str, _msg: PropertyQueryRequest):
