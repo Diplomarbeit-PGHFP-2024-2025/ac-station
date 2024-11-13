@@ -2,6 +2,7 @@ import asyncio
 from asyncio import sleep
 import datetime
 import socket
+import json
 
 from uagents import Agent, Context
 from uagents.setup import fund_agent_if_low
@@ -14,6 +15,7 @@ from aca_protocols.station_register_protocol import (
 from aca_protocols.property_query_protocol import (
     PropertyQueryRequest,
     PropertyQueryResponse,
+    PropertyData,
 )
 
 from aca_protocols.car_register_protocol import CarRegisterRequest, CarRegisterResponse
@@ -33,27 +35,35 @@ agent = Agent(
 fund_agent_if_low(agent.wallet.address())
 
 
+class A:
+    a: int
+    b: int
+
+
 @agent.on_event("startup")
 async def startup_event(ctx: Context):
     ctx.logger.info(f"Agent: {agent.name} ({agent.address})")
 
-    ctx.storage.set("open_time_frames", [(0, 0), (0, 0)])
-    ctx.storage.set("geo_point", (20.32, 85.52))
-    ctx.storage.set("cost_per_kwh", 34.76)
-    ctx.storage.set("charging_wattage", 11)
-    ctx.storage.set("green_energy", False)
-
     # run function in background so agent can fully start while registering
     asyncio.ensure_future(register_at_registry(ctx))
 
+    properties = PropertyData(
+        open_time_frames=[(0, 0), (0, 0)],
+        geo_point=(20.32, 85.52),
+        cost_per_kwh=34.76,
+        charging_wattage=11,
+        green_energy=False,
+    )
+
+    ctx.storage.set("properties", properties.toJson())
     ctx.storage.set("expireAt", datetime.datetime.fromtimestamp(86400).timestamp())
 
 
 async def register_at_registry(ctx: Context):
     while True:
         if (
-            datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
-            > datetime.datetime.now()
+                datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
+                > datetime.datetime.now()
         ):
             await sleep(
                 ctx.storage.get("expireAt") - datetime.datetime.now().timestamp()
@@ -85,13 +95,10 @@ async def on_register_car(ctx: Context, sender: str, msg: CarRegisterRequest):
 async def on_query_properties(ctx: Context, sender: str, _msg: PropertyQueryRequest):
     ctx.logger.info(f"{sender} requested params")
 
-    response = PropertyQueryResponse(
-        open_time_frames=ctx.storage.get("open_time_frames"),
-        geo_point=ctx.storage.get("geo_point"),
-        cost_per_kwh=ctx.storage.get("cost_per_kwh"),
-        charging_wattage=ctx.storage.get("charging_wattage"),
-        green_energy=ctx.storage.get("green_energy"),
-    )
+    properties = ctx.storage.get("properties")
+    properties = PropertyData.fromJson(properties)
+
+    response = PropertyQueryResponse(properties=properties)
 
     await ctx.send(sender, response)
 
