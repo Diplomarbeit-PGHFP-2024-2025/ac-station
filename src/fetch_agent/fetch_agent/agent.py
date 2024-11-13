@@ -13,7 +13,7 @@ from aca_protocols.station_register_protocol import (
 
 from aca_protocols.property_query_protocol import (
     PropertyQueryRequest,
-    PropertyQueryResponse
+    PropertyQueryResponse,
 )
 
 from aca_protocols.car_register_protocol import CarRegisterRequest, CarRegisterResponse
@@ -74,19 +74,23 @@ async def on_is_registered(ctx: Context, sender: str, _msg: StationRegisterRespo
     ctx.logger.info(f"got registered by: {sender}; TTL: {_msg.ttl}")
     ctx.storage.set("expireAt", datetime.datetime.now().timestamp() + (_msg.ttl * 0.5))
 
+
 @agent.on_message(CarRegisterRequest)
 async def on_register_car(ctx: Context, sender: str, msg: CarRegisterRequest):
     ctx.logger.info(f"car {sender} wants to be registered: {msg}")
     await ctx.send(sender, CarRegisterResponse(success=True))
 
+
 @agent.on_message(PropertyQueryRequest)
 async def on_query_properties(ctx: Context, sender: str, _msg: PropertyQueryRequest):
+    ctx.logger.info(f"{sender} requested params")
+
     response = PropertyQueryResponse(
         open_time_frames=ctx.storage.get("open_time_frames"),
         geo_point=ctx.storage.get("geo_point"),
         cost_per_kwh=ctx.storage.get("cost_per_kwh"),
         charging_wattage=ctx.storage.get("charging_wattage"),
-        green_energy=ctx.storage.get("green_energy")
+        green_energy=ctx.storage.get("green_energy"),
     )
 
     await ctx.send(sender, response)
