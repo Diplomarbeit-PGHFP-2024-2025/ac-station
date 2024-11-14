@@ -18,6 +18,6 @@ setup(
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["agent = fetch_agent.agent:main"],
+        "console_scripts": ["agent = fetch_agent.agent:main", "ros_agent = fetch_agent.rosAgent:main"],
     },
 )
