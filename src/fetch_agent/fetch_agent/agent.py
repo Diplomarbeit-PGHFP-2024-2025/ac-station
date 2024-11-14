@@ -33,12 +33,6 @@ agent = Agent(
 
 fund_agent_if_low(agent.wallet.address())
 
-
-class A:
-    a: int
-    b: int
-
-
 @agent.on_event("startup")
 async def startup_event(ctx: Context):
     ctx.logger.info(f"Agent: {agent.name} ({agent.address})")
@@ -70,9 +64,12 @@ async def register_at_registry(ctx: Context):
             continue
 
         ctx.logger.info(f"Trying to introduce: {agent.name} ({agent.address})")
+
+        properties = ctx.storage.get("properties")
+        properties = PropertyData.fromJson(properties)
         await ctx.send(
             acs_id,
-            StationRegisterRequest(lat=1.0, long=1.0),
+            StationRegisterRequest(lat=properties.geo_point[0], long=properties.geo_point[1]),
         )
 
         await sleep(5)
