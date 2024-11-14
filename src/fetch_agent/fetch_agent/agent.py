@@ -2,7 +2,6 @@ import asyncio
 from asyncio import sleep
 import datetime
 import socket
-import json
 
 from uagents import Agent, Context
 from uagents.setup import fund_agent_if_low
@@ -62,8 +61,8 @@ async def startup_event(ctx: Context):
 async def register_at_registry(ctx: Context):
     while True:
         if (
-                datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
-                > datetime.datetime.now()
+            datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
+            > datetime.datetime.now()
         ):
             await sleep(
                 ctx.storage.get("expireAt") - datetime.datetime.now().timestamp()
