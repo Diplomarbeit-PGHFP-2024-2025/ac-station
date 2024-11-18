@@ -2,6 +2,9 @@ import asyncio
 from asyncio import sleep
 import datetime
 import socket
+import rclpy
+
+from .minimal_publisher import MinimalPublisher
 
 from uagents import Agent, Context
 from uagents.setup import fund_agent_if_low
@@ -31,12 +34,16 @@ agent = Agent(
     endpoint=["http://{}:8001/submit".format(IPAddr)],
 )
 
+rclpy.init()
+minimal_publisher = MinimalPublisher()
+
 fund_agent_if_low(agent.wallet.address())
 
 
 @agent.on_event("startup")
 async def startup_event(ctx: Context):
     ctx.logger.info(f"Agent: {agent.name} ({agent.address})")
+    minimal_publisher.log_message(f"Agent: {agent.name} ({agent.address})")
 
     # run function in background so agent can fully start while registering
     asyncio.ensure_future(register_at_registry(ctx))
