@@ -3,6 +3,7 @@ import datetime
 import socket
 import rclpy
 
+from .queuing_system import QueuingSystem
 from .minimal_publisher import MinimalPublisher
 
 from uagents import Agent, Context
@@ -44,6 +45,10 @@ async def startup_event(ctx: Context):
     # run function in background so agent can fully start while registering
     asyncio.ensure_future(register_at_registry(ctx, agent))
 
+    queuing_system = QueuingSystem(
+        reservations=[]
+    )
+
     properties = PropertyData(
         open_time_frames=[(0, 0), (0, 0)],
         geo_point=(20.32, 85.52),
@@ -52,6 +57,7 @@ async def startup_event(ctx: Context):
         green_energy=False,
     )
 
+    ctx.storage.set("queuing_system", queuing_system.to_json())
     ctx.storage.set("properties", properties.to_json())
     ctx.storage.set("expireAt", datetime.datetime.fromtimestamp(86400).timestamp())
 
