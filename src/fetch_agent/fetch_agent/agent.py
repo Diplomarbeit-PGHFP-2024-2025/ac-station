@@ -45,9 +45,7 @@ async def startup_event(ctx: Context):
     # run function in background so agent can fully start while registering
     asyncio.ensure_future(register_at_registry(ctx, agent))
 
-    queuing_system = QueuingSystem(
-        reservations=[]
-    )
+    queuing_system = QueuingSystem(reservations=[])
 
     properties = PropertyData(
         open_time_frames=[(0, 0), (0, 0)],

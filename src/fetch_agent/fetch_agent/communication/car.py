@@ -27,7 +27,9 @@ async def on_register_car(ctx: Context, sender: str, request: CarRegisterRequest
     properties = ctx.storage.get("properties")
     properties = PropertyData.from_json(properties)
 
-    queuing_system.reservations.append((request.start_time, request.start_time + request.duration))
+    queuing_system.reservations.append(
+        (request.start_time, request.start_time + request.duration)
+    )
     properties.open_time_frames = queuing_system.open_time_frames()
     ctx.storage.set("properties", properties.to_json())
 
@@ -44,8 +46,6 @@ async def on_query_properties(ctx: Context, sender: str, request: PropertyQueryR
     ctx.logger.info(f"{sender} requested params")
 
     properties = ctx.storage.get("properties")
-    properties = PropertyData.from_json(properties)
-
     response = PropertyQueryResponse(properties=properties)
 
     await ctx.send(sender, response)
