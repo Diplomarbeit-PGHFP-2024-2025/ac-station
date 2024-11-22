@@ -46,9 +46,9 @@ class QueuingSystem:
         if start < int(datetime.datetime.now().timestamp()):
             return True
         if start + duration > int(
-                datetime.datetime.now()
-                        .replace(year=datetime.datetime.now().year + 1)
-                        .timestamp()
+            datetime.datetime.now()
+            .replace(year=datetime.datetime.now().year + 1)
+            .timestamp()
         ):
             return True
         for reservation in self.reservations:
