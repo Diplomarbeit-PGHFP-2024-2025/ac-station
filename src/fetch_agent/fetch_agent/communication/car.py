@@ -1,7 +1,4 @@
-from aca_protocols.car_register_protocol import (
-    CarRegisterRequest,
-    CarRegisterResponse
-)
+from aca_protocols.car_register_protocol import CarRegisterRequest, CarRegisterResponse
 
 from uagents import Context, Protocol
 
