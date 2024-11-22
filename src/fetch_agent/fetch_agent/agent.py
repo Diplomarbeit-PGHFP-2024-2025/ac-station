@@ -8,14 +8,12 @@ from .minimal_publisher import MinimalPublisher
 from uagents import Agent, Context
 from uagents.setup import fund_agent_if_low
 
-
 from aca_protocols.property_query_protocol import (
     PropertyData,
 )
 
-
-from .communication.station import protocol as station_protocol, register_at_registry
-from .communication.car import protocol as car_protocol
+from .communication.registry import stationRegisterProtocol, register_at_registry
+from .communication.car import propertyQueryProtocol, carRegisterProtocol
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -27,8 +25,10 @@ agent = Agent(
     endpoint=["http://{}:8001/submit".format(IPAddr)],
 )
 
-agent.include(station_protocol)
-agent.include(car_protocol)
+agent.include(stationRegisterProtocol)
+
+agent.include(carRegisterProtocol)
+agent.include(propertyQueryProtocol)
 
 rclpy.init()
 minimal_publisher = MinimalPublisher()
