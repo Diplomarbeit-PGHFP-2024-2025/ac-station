@@ -48,7 +48,7 @@ async def startup_event(ctx: Context):
     queuing_system = QueuingSystem(reservations=[])
 
     properties = PropertyData(
-        open_time_frames=[(0, 0), (0, 0)],
+        open_time_frames=queuing_system.open_time_frames(),
         geo_point=(20.32, 85.52),
         cost_per_kwh=34.76,
         charging_wattage=11,

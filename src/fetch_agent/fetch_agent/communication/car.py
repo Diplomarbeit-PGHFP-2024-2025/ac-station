@@ -32,6 +32,7 @@ async def on_register_car(ctx: Context, sender: str, request: CarRegisterRequest
     )
     properties.open_time_frames = queuing_system.open_time_frames()
     ctx.storage.set("properties", properties.to_json())
+    ctx.storage.set("queuing_system", queuing_system.to_json())
 
     await ctx.send(sender, CarRegisterResponse(success=True))
 
