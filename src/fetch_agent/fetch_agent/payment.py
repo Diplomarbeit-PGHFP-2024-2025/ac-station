@@ -4,7 +4,6 @@ from aca_protocols.ac_charging_protocol import CarFinishedChargingInfo
 from aca_protocols.property_query_protocol import (
     PropertyData,
 )
-from agent import agent
 from uagents.network import wait_for_tx_to_complete
 
 
@@ -15,7 +14,10 @@ def initialize_payment_map(ctx: Context):
 
 
 async def send_payment_request(
-    ctx: Context, car_address: str, info: CarFinishedChargingInfo
+    ctx: Context,
+    car_address: str,
+    info: CarFinishedChargingInfo,
+    agent_wallet_address: str,
 ):
     properties: PropertyData = PropertyData.from_json(ctx.storage.get("properties"))
 
@@ -28,27 +30,29 @@ async def send_payment_request(
     await ctx.send(
         car_address,
         PaymentRequest(
-            wallet_address=str(agent.wallet.address()),
+            wallet_address=agent_wallet_address,
             amount=amount_to_pay,
             denomination=DENOM,
         ),
     )
 
     expected_payment: {str, float} = ctx.storage.get("expected_payment")
-    expected_payment[car_address] += amount_to_pay
+    expected_payment[car_address] = amount_to_pay
 
 
-async def confirm_transaction(ctx: Context, car_address: str, info: TransactionInfo):
+async def confirm_transaction(
+    ctx: Context, car_address: str, info: TransactionInfo, agent_wallet_address: str
+):
     ctx.logger.info(
         f"[Payment, confirm_transaction]: Received transaction info from {car_address}: {info}"
     )
-    tx_resp = await wait_for_tx_to_complete(info.tx_hash, ctx.ledger)
+    tx_resp = await wait_for_tx_to_complete(info.transaction_hash, ctx.ledger)
 
     coin_received = tx_resp.events["coin_received"]
     expected_amount = ctx.storage.get("expected_payment")[car_address]
 
     if (
-        coin_received["receiver"] == str(agent.wallet.address())
+        coin_received["receiver"] == agent_wallet_address
         and coin_received["amount"] == f"{expected_amount}{DENOM}"
     ):
         ctx.logger.info(

@@ -31,7 +31,9 @@ from aca_protocols.ac_charging_protocol import (
     CarFinishedChargingInfo,
 )
 
-from payment import send_payment_request
+from .payment import send_payment_request, confirm_transaction, initialize_payment_map
+
+from aca_protocols.ac_payment_protocol import TransactionInfo
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -67,6 +69,8 @@ async def startup_event(ctx: Context):
 
     ctx.storage.set("properties", properties.to_json())
     ctx.storage.set("expireAt", datetime.datetime.fromtimestamp(86400).timestamp())
+
+    initialize_payment_map(ctx)
 
 
 async def register_at_registry(ctx: Context):
@@ -129,7 +133,13 @@ async def on_car_completed_charging(
     ctx: Context, sender: str, _msg: CarFinishedChargingInfo
 ):
     ctx.logger.info(f"car {sender} finished charging")
-    await send_payment_request(ctx, sender, _msg)
+    await send_payment_request(ctx, sender, _msg, str(agent.wallet.address()))
+
+
+@agent.on_message(TransactionInfo)
+async def on_transaction_info(ctx: Context, sender: str, _msg: TransactionInfo):
+    ctx.logger.info(f"car {sender} sent transaction info: {_msg}")
+    await confirm_transaction(ctx, sender, _msg, str(agent.wallet.address()))
 
 
 def main(args=None):
