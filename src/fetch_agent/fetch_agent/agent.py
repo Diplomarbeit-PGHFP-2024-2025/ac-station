@@ -1,20 +1,30 @@
 import asyncio
 import datetime
 import socket
+
 import rclpy
-
-from .queuing_system import QueuingSystem
-from .minimal_publisher import MinimalPublisher
-
-from uagents import Agent, Context
-from uagents.setup import fund_agent_if_low
-
+from aca_protocols.ac_payment_protocol import MIN_TEST_AMOUNT
 from aca_protocols.property_query_protocol import (
     PropertyData,
 )
+from uagents import Agent, Context
+from uagents.setup import fund_agent_if_low
 
 from .communication.registry import stationRegisterProtocol, register_at_registry
 from .communication.car import propertyQueryProtocol, carRegisterProtocol
+
+from .minimal_publisher import MinimalPublisher
+from .payment import initialize_payment_map
+from .queuing_system import QueuingSystem
+
+from aca_protocols.ac_charging_protocol import (
+    CarStartedChargingInfo,
+    CarFinishedChargingInfo,
+)
+
+from uagents.network import get_ledger
+from aca_protocols.ac_payment_protocol import TransactionInfo
+from .payment import send_payment_request, confirm_transaction
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -25,6 +35,8 @@ agent = Agent(
     port=8001,
     endpoint=["http://{}:8001/submit".format(IPAddr)],
 )
+
+fund_agent_if_low(agent.wallet.address(), min_balance=MIN_TEST_AMOUNT)
 
 agent.include(stationRegisterProtocol)
 
@@ -59,8 +71,41 @@ async def startup_event(ctx: Context):
     ctx.storage.set("properties", properties.to_json())
     ctx.storage.set("expireAt", datetime.datetime.fromtimestamp(86400).timestamp())
 
+    initialize_payment_map(ctx)
 
-def main():
+
+@agent.on_message(model=CarStartedChargingInfo)
+async def on_car_started_charging(
+    ctx: Context, sender: str, _msg: CarStartedChargingInfo
+):
+    ctx.logger.info(f"car {sender} charging")
+
+
+@agent.on_message(model=CarFinishedChargingInfo)
+async def on_car_completed_charging(
+    ctx: Context, sender: str, _msg: CarFinishedChargingInfo
+):
+    ctx.logger.info(f"car {sender} finished charging")
+    ledger = get_ledger(test=True)
+    agent_balance = ledger.query_bank_balance(agent.wallet.address())
+
+    await send_payment_request(
+        ctx, sender, _msg, str(agent.wallet.address()), agent_balance
+    )
+
+
+@agent.on_message(model=TransactionInfo)
+async def on_transaction_info(ctx: Context, sender: str, _msg: TransactionInfo):
+    ctx.logger.info(f"car {sender} sent transaction info: {_msg}")
+    ledger = get_ledger(test=True)
+    agent_balance = ledger.query_bank_balance(agent.wallet.address())
+
+    await confirm_transaction(
+        ctx, sender, _msg, str(agent.wallet.address()), agent_balance
+    )
+
+
+def main(args=None):
     agent.run()
 
 

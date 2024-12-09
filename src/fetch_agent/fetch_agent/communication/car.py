@@ -10,6 +10,7 @@ from aca_protocols.property_query_protocol import (
 
 from ..queuing_system import QueuingSystem
 
+
 carRegisterProtocol = Protocol()
 
 
