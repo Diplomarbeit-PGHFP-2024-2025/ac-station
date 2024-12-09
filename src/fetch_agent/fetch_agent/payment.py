@@ -39,6 +39,7 @@ async def send_payment_request(
 
     expected_payment: {str, float} = ctx.storage.get("expected_payment")
     expected_payment[car_address] = amount_to_pay
+    ctx.storage.set("expected_payment", expected_payment)
 
 
 async def confirm_transaction(
