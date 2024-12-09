@@ -10,6 +10,8 @@ from aca_protocols.property_query_protocol import (
 
 from ..queuing_system import QueuingSystem
 
+
+
 carRegisterProtocol = Protocol()
 
 
@@ -50,3 +52,5 @@ async def on_query_properties(ctx: Context, sender: str, request: PropertyQueryR
     response = PropertyQueryResponse(properties=properties)
 
     await ctx.send(sender, response)
+
+
