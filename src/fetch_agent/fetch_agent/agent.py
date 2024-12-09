@@ -7,7 +7,7 @@ from aca_protocols.ac_payment_protocol import MIN_TEST_AMOUNT
 from aca_protocols.property_query_protocol import (
     PropertyData,
 )
-from uagents import Agent, Context, Protocol
+from uagents import Agent, Context
 from uagents.setup import fund_agent_if_low
 
 from .communication.registry import stationRegisterProtocol, register_at_registry
@@ -76,14 +76,14 @@ async def startup_event(ctx: Context):
 
 @agent.on_message(model=CarStartedChargingInfo)
 async def on_car_started_charging(
-        ctx: Context, sender: str, _msg: CarStartedChargingInfo
+    ctx: Context, sender: str, _msg: CarStartedChargingInfo
 ):
     ctx.logger.info(f"car {sender} charging")
 
 
 @agent.on_message(model=CarFinishedChargingInfo)
 async def on_car_completed_charging(
-        ctx: Context, sender: str, _msg: CarFinishedChargingInfo
+    ctx: Context, sender: str, _msg: CarFinishedChargingInfo
 ):
     ctx.logger.info(f"car {sender} finished charging")
     ledger = get_ledger(test=True)
