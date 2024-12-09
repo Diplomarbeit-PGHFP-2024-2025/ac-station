@@ -14,17 +14,18 @@ def initialize_payment_map(ctx: Context):
 
 
 async def send_payment_request(
-    ctx: Context,
-    car_address: str,
-    info: CarFinishedChargingInfo,
-    agent_wallet_address: str,
+        ctx: Context,
+        car_address: str,
+        info: CarFinishedChargingInfo,
+        agent_wallet_address: str,
+        agent_balance: int
 ):
     properties: PropertyData = PropertyData.from_json(ctx.storage.get("properties"))
 
     amount_to_pay: int = int(round(properties.cost_per_kwh * info.kwh_charged, 0))
 
     ctx.logger.info(
-        f"[Payment, send_payment_request]: Sending payment request {car_address} for amount {amount_to_pay}"
+        f"[Payment, send_payment_request]: Sending payment request {car_address} for amount {amount_to_pay}. Current balance: {agent_balance}"
     )
 
     await ctx.send(
@@ -41,7 +42,7 @@ async def send_payment_request(
 
 
 async def confirm_transaction(
-    ctx: Context, car_address: str, info: TransactionInfo, agent_wallet_address: str
+        ctx: Context, car_address: str, info: TransactionInfo, agent_wallet_address: str, agent_balance: int
 ):
     ctx.logger.info(
         f"[Payment, confirm_transaction]: Received transaction info from {car_address}: {info}"
@@ -52,9 +53,9 @@ async def confirm_transaction(
     expected_amount = ctx.storage.get("expected_payment")[car_address]
 
     if (
-        coin_received["receiver"] == agent_wallet_address
-        and coin_received["amount"] == f"{expected_amount}{DENOM}"
+            coin_received["receiver"] == agent_wallet_address
+            and coin_received["amount"] == f"{expected_amount}{DENOM}"
     ):
         ctx.logger.info(
-            f"[Payment, confirm_transaction]: Transaction successful: {car_address} payed {expected_amount}{DENOM}"
+            f"[Payment, confirm_transaction]: Transaction successful: {car_address} payed {expected_amount}{DENOM}. New balance: {agent_balance}"
         )

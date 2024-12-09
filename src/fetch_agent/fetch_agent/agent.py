@@ -8,6 +8,7 @@ from .minimal_publisher import MinimalPublisher
 
 from uagents import Agent, Context
 from uagents.setup import fund_agent_if_low
+from uagents.network import get_faucet, get_ledger
 
 from aca_protocols.station_register_protocol import (
     StationRegisterResponse,
@@ -76,8 +77,8 @@ async def startup_event(ctx: Context):
 async def register_at_registry(ctx: Context):
     while True:
         if (
-            datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
-            > datetime.datetime.now()
+                datetime.datetime.fromtimestamp(ctx.storage.get("expireAt"))
+                > datetime.datetime.now()
         ):
             await sleep(
                 ctx.storage.get("expireAt") - datetime.datetime.now().timestamp()
@@ -123,23 +124,29 @@ async def on_query_properties(ctx: Context, sender: str, _msg: PropertyQueryRequ
 
 @agent.on_message(CarStartedChargingInfo)
 async def on_car_started_charging(
-    ctx: Context, sender: str, _msg: CarStartedChargingInfo
+        ctx: Context, sender: str, _msg: CarStartedChargingInfo
 ):
     ctx.logger.info(f"car {sender} charging")
 
 
 @agent.on_message(CarFinishedChargingInfo)
 async def on_car_completed_charging(
-    ctx: Context, sender: str, _msg: CarFinishedChargingInfo
+        ctx: Context, sender: str, _msg: CarFinishedChargingInfo
 ):
     ctx.logger.info(f"car {sender} finished charging")
-    await send_payment_request(ctx, sender, _msg, str(agent.wallet.address()))
+    ledger = get_ledger(test=True)
+    agent_balance = ledger.query_bank_balance(agent.wallet.address())
+
+    await send_payment_request(ctx, sender, _msg, str(agent.wallet.address()), agent_balance)
 
 
 @agent.on_message(TransactionInfo)
 async def on_transaction_info(ctx: Context, sender: str, _msg: TransactionInfo):
     ctx.logger.info(f"car {sender} sent transaction info: {_msg}")
-    await confirm_transaction(ctx, sender, _msg, str(agent.wallet.address()))
+    ledger = get_ledger(test=True)
+    agent_balance = ledger.query_bank_balance(agent.wallet.address())
+
+    await confirm_transaction(ctx, sender, _msg, str(agent.wallet.address()), agent_balance)
 
 
 def main(args=None):
