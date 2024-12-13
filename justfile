@@ -8,7 +8,7 @@ init:
 
 install:
     python3 -m pip install uagents==0.17.1
-    python3 -m pip install git+https://github.com/Diplomarbeit-PGHFP-2024-2025/aca-protocols.git@cb30517492fa3555847de7ee8d5fc10596364a91
+    python3 -m pip install git+https://github.com/Diplomarbeit-PGHFP-2024-2025/aca-protocols.git@2f5a018eeb6ef426013923ab298068cf9ffc779b
     python3 -m pip install ruff
 
 lint:
