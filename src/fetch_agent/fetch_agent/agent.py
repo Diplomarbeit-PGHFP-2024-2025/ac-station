@@ -66,7 +66,7 @@ async def startup_event(ctx: Context):
     geo_point = (float(os.getenv("GEO_POINT_X")), float(os.getenv("GEO_POINT_Y")))
     cost_per_kwh = float(os.getenv("COST_PER_KWM"))
     charging_wattage = int(os.getenv("CHARGING_WATTAGE"))
-    green_energy = os.getenv("GREEN_ENERGY") == 'true'
+    green_energy = os.getenv("GREEN_ENERGY") == "true"
 
     properties = PropertyData(
         open_time_frames=queuing_system.open_time_frames(),
@@ -85,14 +85,14 @@ async def startup_event(ctx: Context):
 
 @agent.on_message(model=CarStartedChargingInfo)
 async def on_car_started_charging(
-        ctx: Context, sender: str, _msg: CarStartedChargingInfo
+    ctx: Context, sender: str, _msg: CarStartedChargingInfo
 ):
     ctx.logger.info(f"car {sender} charging")
 
 
 @agent.on_message(model=CarFinishedChargingInfo)
 async def on_car_completed_charging(
-        ctx: Context, sender: str, _msg: CarFinishedChargingInfo
+    ctx: Context, sender: str, _msg: CarFinishedChargingInfo
 ):
     ctx.logger.info(f"car {sender} finished charging")
     ledger = get_ledger(test=True)
