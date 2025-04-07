@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import os
 import socket
 
 import rclpy
@@ -7,6 +8,7 @@ from aca_protocols.ac_payment_protocol import MIN_TEST_AMOUNT
 from aca_protocols.property_query_protocol import (
     PropertyData,
 )
+from dotenv import load_dotenv
 from uagents import Agent, Context
 from uagents.setup import fund_agent_if_low
 
@@ -25,6 +27,8 @@ from aca_protocols.ac_charging_protocol import (
 from uagents.network import get_ledger
 from aca_protocols.ac_payment_protocol import TransactionInfo
 from .payment import send_payment_request, confirm_transaction
+
+load_dotenv()
 
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
@@ -59,12 +63,17 @@ async def startup_event(ctx: Context):
 
     queuing_system = QueuingSystem(reservations=[])
 
+    geo_point = (float(os.getenv("GEO_POINT_X")), float(os.getenv("GEO_POINT_Y")))
+    cost_per_kwh = float(os.getenv("COST_PER_KWM"))
+    charging_wattage = int(os.getenv("CHARGING_WATTAGE"))
+    green_energy = os.getenv("GREEN_ENERGY") == "true"
+
     properties = PropertyData(
         open_time_frames=queuing_system.open_time_frames(),
-        geo_point=(20.32, 85.52),
-        cost_per_kwh=34.76,
-        charging_wattage=11,
-        green_energy=False,
+        geo_point=geo_point,
+        cost_per_kwh=cost_per_kwh,
+        charging_wattage=charging_wattage,
+        green_energy=green_energy,
     )
 
     ctx.storage.set("queuing_system", queuing_system.to_json())
@@ -106,6 +115,17 @@ async def on_transaction_info(ctx: Context, sender: str, _msg: TransactionInfo):
 
 
 def main(args=None):
+    if not os.getenv("GEO_POINT_X"):
+        raise Exception("GEO_POINT_X environment variable not set")
+    if not os.getenv("GEO_POINT_Y"):
+        raise Exception("GEO_POINT_Y environment variable not set")
+    if not os.getenv("COST_PER_KWM"):
+        raise Exception("COST_PER_KWM environment variable not set")
+    if not os.getenv("CHARGING_WATTAGE"):
+        raise Exception("CHARGING_WATTAGE environment variable not set")
+    if not os.getenv("GREEN_ENERGY"):
+        raise Exception("GREEN_ENERGY environment variable not set")
+
     agent.run()
 
 
